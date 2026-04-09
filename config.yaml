@@ -1,0 +1,108 @@
+defaults:
+  - train
+  - _self_
+
+batch_size: 5000
+
+mesh:
+  _target_: pinnstorch.data.PointCloud
+  root_dir: ${paths.data_dir}
+  read_data_fn: ???
+
+train_datasets:
+  - mesh_sampler:
+      _target_: pinnstorch.data.MeshSampler
+      _partial_: true
+      solution:
+      - c
+      - u
+      - v
+      - w
+      - p
+
+  - mesh_sampler:
+      _target_: pinnstorch.data.MeshSampler
+      _partial_: true
+      collection_points:
+        - e1
+        - e2
+        - e3
+        - e4
+        - e5
+      use_lhs: false
+
+val_dataset:
+  - mesh_sampler:
+      _target_: pinnstorch.data.MeshSampler
+      _partial_: true
+      solution:
+        - c
+        - u
+        - v
+        - w
+        - p
+
+pred_dataset:
+  - mesh_sampler:
+      _target_: pinnstorch.data.MeshSampler
+      _partial_: true
+      idx_t: 100
+      solution:
+        - c
+        - u
+        - v
+        - w
+        - p
+
+test_dataset:
+  - mesh_sampler:
+      _target_: pinnstorch.data.MeshSampler
+      _partial_: true
+      idx_t: 100
+      solution:
+        - c
+        - u
+        - v
+        - w
+        - p
+
+net:
+  _target_: pinnstorch.models.NetHFM
+  layers: [4, 128, 128, 128, 128, 5]
+  output_names:
+    - c
+    - u
+    - v
+    - w
+    - p
+
+model:
+  loss_fn: mse
+  jit_compile: false        # Ensure this is false
+  cudagraph_compile: false  # CHANGE THIS TO FALSE (This is causing the 30s delay)
+
+trainer:
+  accelerator: gpu
+  max_epochs: 5
+  max_steps: 20000
+  devices: [0]
+  deterministic: false
+  check_val_every_n_epoch: 1 # CHANGE TO 1 so it saves every epoch
+
+train: true
+val: true
+test: false
+save_pred: true 
+
+optimized_metric:
+  error:
+    - c
+    - u
+    - v
+    - w
+
+task_name: aneurysm3D
+
+hydra:
+  searchpath:
+    - pkg://pinnstorch/conf
